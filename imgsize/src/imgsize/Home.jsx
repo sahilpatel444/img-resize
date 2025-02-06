@@ -79,7 +79,7 @@ const HomePage = () => {
         </p>
       </section>
       {/* footer*/}
-      <section className="bg-gray-800 p-15 mt-5">
+      {/* <section className="bg-gray-800 p-15 mt-5">
         <div className=" grid-cols-1  space-x-1.5 flex-auto ">
           <p>IMG TO PDF</p>
           <p>IMG TO PDF</p>
@@ -87,7 +87,7 @@ const HomePage = () => {
           <p>IMG TO PDF</p>
           <p>IMG TO PDF</p>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };
