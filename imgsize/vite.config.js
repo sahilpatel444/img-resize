@@ -5,15 +5,15 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(),],
+  plugins: [react(), tailwindcss()],
   base: "/",
-  
+
   build: {
-    chunkSizeWarningLimit: 1500,  // Set to a higher value (in KB)
-    rollupOptions: {
-    
-      external: ["@headlessui/react"],
-      
-    },
+    chunkSizeWarningLimit: 1500, // Set to a higher value (in KB)
+    // rollupOptions: {
+
+    //   external: ["@headlessui/react"],
+
+    // },
   },
 });
