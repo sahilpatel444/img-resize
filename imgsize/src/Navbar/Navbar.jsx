@@ -53,6 +53,7 @@ function classNames(...classes) {
 const Navbar = () => {
   const navigate = useNavigate(); // If using Next.js
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [navbarOpen, setNavbarOpen] = useState(true);
 
   return (
     <Disclosure as="nav" className="bg-gray-800">
@@ -176,7 +177,6 @@ const Navbar = () => {
                     Settings
                   </Link>
                 </MenuItem>
-                
               </MenuItems>
             </Menu>
           </div>
@@ -192,11 +192,12 @@ const Navbar = () => {
               to={item.href}
               // aria-current={item.current ? "page" : undefined}
               onClick={(e) => {
-                if (!item.dropdown)
+                if (!item.dropdown) {
                   close(); // ✅ Closes menu when clicking non-dropdown items
-                else 
-                e.preventDefault(); // ✅ Prevents default navigation for dropdown headers
-              setOpenDropdown(openDropdown === index ? null : index);
+                } else {
+                  e.preventDefault(); // ✅ Prevents default navigation for dropdown headers
+                  setOpenDropdown(openDropdown === index ? null : index);
+                }
               }}
               className={classNames(
                 item.current
@@ -223,7 +224,10 @@ const Navbar = () => {
                     key={subItem.name}
                     to={subItem.href}
                     className="block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md text-sm"
-                    onClick={(e) => e.stopPropagation()} // ✅ Prevents closing dropdown when clicking inside
+                    onClick={() => {
+                      // setOpenDropdown(null); // ✅ Close dropdown
+                      close(); // ✅ Close entire navbar
+                    }}
                   >
                     {subItem.name}
                   </Link>

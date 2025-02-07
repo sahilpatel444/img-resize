@@ -8,6 +8,7 @@ import ImgtoPdf from "./pages/Convert/ImgtoPdf";
 import PdfToImg from "./pages/Convert/PdfToImg";
 import Bulkresize from "./pages/Bulkresize/Bulkresize";
 import JpgToPng from "./pages/Compress/JpgToPng";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           v7_startTransition: true,
         }}
       >
+        <Analytics />
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
