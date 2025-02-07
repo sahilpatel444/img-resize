@@ -191,10 +191,12 @@ const Navbar = () => {
               as={Link}
               to={item.href}
               // aria-current={item.current ? "page" : undefined}
-              onClick={() => {
+              onClick={(e) => {
                 if (!item.dropdown)
                   close(); // ✅ Closes menu when clicking non-dropdown items
-                else setOpenDropdown(openDropdown === index ? null : index);
+                else 
+                e.preventDefault(); // ✅ Prevents default navigation for dropdown headers
+              setOpenDropdown(openDropdown === index ? null : index);
               }}
               className={classNames(
                 item.current
@@ -221,6 +223,7 @@ const Navbar = () => {
                     key={subItem.name}
                     to={subItem.href}
                     className="block px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md text-sm"
+                    onClick={(e) => e.stopPropagation()} // ✅ Prevents closing dropdown when clicking inside
                   >
                     {subItem.name}
                   </Link>
