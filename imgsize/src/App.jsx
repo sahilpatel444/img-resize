@@ -9,6 +9,7 @@ import PdfToImg from "./pages/Convert/PdfToImg";
 import Bulkresize from "./pages/Bulkresize/Bulkresize";
 import JpgToPng from "./pages/Compress/JpgToPng";
 import { Analytics } from "@vercel/analytics/react";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -19,9 +20,10 @@ function App() {
         }}
       >
         <Analytics />
-        <Navbar />
+          <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
           <Route path="/resize" element={<InputFilePage />} />
           <Route path="/image-resizer" element={<h1>Image Resizer Page</h1>} />
           <Route path="/crop-image" element={<h1>Crop Image Page</h1>} />
@@ -34,6 +36,7 @@ function App() {
             element={<h1>WEBP to PNG Page</h1>}
           />
           <Route path="/bulk-resize" element={<Bulkresize />} />
+          {/* <Route path="/three" element={<ThreeScene />} /> */}
         </Routes>
       </BrowserRouter>
     </>

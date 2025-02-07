@@ -53,7 +53,7 @@ function classNames(...classes) {
 const Navbar = () => {
   const navigate = useNavigate(); // If using Next.js
   const [openDropdown, setOpenDropdown] = useState(false);
-  const [navbarOpen, setNavbarOpen] = useState(true);
+  // const [navbarOpen, setNavbarOpen] = useState(true);
 
   return (
     <Disclosure as="nav" className="bg-gray-800">
