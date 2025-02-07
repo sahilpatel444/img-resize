@@ -20,7 +20,7 @@ function App() {
         }}
       >
         <Analytics />
-          <Navbar />
+        <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="*" element={<NotFound />} />

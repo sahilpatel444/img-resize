@@ -24,7 +24,8 @@ const NotFound = () => {
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="text-4xl font-bold text-red-500">404 - Page Not Found</h1>
       <p className="mt-2 text-gray-600">
-        Redirecting to home in <span className="text-blue-500 font-semibold">{count}</span> seconds...
+        Redirecting to home in{" "}
+        <span className="text-blue-500 font-semibold">{count}</span> seconds...
       </p>
     </div>
   );
