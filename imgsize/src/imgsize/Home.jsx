@@ -32,7 +32,7 @@ const HomePage = () => {
         <h2 className="text-2xl font-semibold text-center">Features</h2>
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold">Resize Images</h3>
+            <h3 className="text-xl font-semibold">Crop Images</h3>
             <p className="mt-2 text-gray-300">
               Adjust image dimensions without losing quality.
             </p>
