@@ -30,7 +30,7 @@ const navigation = [
     dropdown: [
       { name: "MB to KB", href: "/resize" },
       { name: "JPG to PNG", href: "/compress/jpg-to-png" },
-      { name: "WEBP to PNG", href: "/compress/webp-to-png" },
+      { name: "Pdf To Comprase", href: "/compress/pdf-to-comprase" },
     ],
   },
   {

@@ -96,7 +96,8 @@ const PdfToImg = () => {
                 <div className="flex flex-col items-center">
                   <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-white mt-4 font-medium">
-                    Upload Pdf...<br/>
+                    Upload Pdf...
+                    <br />
                     Please Waite
                   </span>
                 </div>
@@ -106,6 +107,17 @@ const PdfToImg = () => {
         ) : (
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">File: {pdfName}</h3>
+            <p className="text-gray-600 mb-4">Total Pages: {pdfPages.length}</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={downloadAllImages}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded flex items-center gap-2 hover:bg-blue-700"
+              >
+                <FiDownload />
+                Download All
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               {pdfPages.map((src, index) => (
                 <div key={index} className="flex flex-col items-center">

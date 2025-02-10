@@ -10,6 +10,7 @@ import Bulkresize from "./pages/Bulkresize/Bulkresize";
 import JpgToPng from "./pages/Compress/JpgToPng";
 import { Analytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
+import PdfToComprase from "./pages/Compress/PdfToComprase";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/image-resizer" element={<h1>Image Resizer Page</h1>} />
           <Route path="/crop-image" element={<h1>Crop Image Page</h1>} />
           <Route path="/compress/mb-to-kb" />
+          <Route path="/compress/pdf-to-comprase" element={<PdfToComprase/>} />
           <Route path="/compress/jpg-to-png" element={<JpgToPng />} />
           <Route path="/convert/img-to-pdf" element={<ImgtoPdf />} />
           <Route path="/convert/pdf-to-img" element={<PdfToImg />} />
