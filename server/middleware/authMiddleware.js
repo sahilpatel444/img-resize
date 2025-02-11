@@ -2,8 +2,6 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../Models/User");
 
-
-
 const verifyAdmin = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1]; // Get token
 
@@ -26,5 +24,4 @@ const verifyAdmin = async (req, res, next) => {
   }
 };
 
-
-module.exports = {verifyAdmin};
+module.exports = { verifyAdmin };
