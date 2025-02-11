@@ -13,9 +13,14 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+
 // ✅ Define API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes); // ✅ Register admin routes
 
-
+app.get("/", (request, response) => {
+    response.json({
+      message: "server running at " + 5000,
+    });
+  });
 app.listen(5000, () => console.log("Server running on port 5000"));
