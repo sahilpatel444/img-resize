@@ -226,9 +226,9 @@ const Navbar = () => {
               <button
                 type="button"
                 className="relative rounded-full bg-gray-800 p-2 text-gray-400 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
-                // onClick={() => setShowDropdown(!showDropdown)}
-                onMouseEnter={() => setShowDropdown(!showDropdown)}
-                onMouseLeave={() => setShowDropdown(true)}
+                 onClick={() => setShowDropdown(!showDropdown)}
+                //onMouseEnter={() => setShowDropdown(!showDropdown)}
+              //  onMouseLeave={() => setShowDropdown(true)}
               >
                 <span className="sr-only">View notifications</span>
                 <BellIcon aria-hidden="true" className="w-6 h-6" />
@@ -242,7 +242,7 @@ const Navbar = () => {
               {/* Notification Dropdown */}
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg z-10 max-h-72 overflow-y-auto border scrollbar-hide">
-                  <div className="py-2 hide-scrollbar" onMouseLeave={() => setShowDropdown(false)}>
+                  <div className="py-2 hide-scrollbar" >
                     {notifications.length === 0 ? (
                       <p className="text-gray-500 text-center py-2">
                         No notifications
