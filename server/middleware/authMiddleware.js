@@ -6,7 +6,9 @@ const verifyAdmin = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1]; // Get token
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized: No token" });
+  
+
+    return res.status(401).json({ message: "Unauthorized: No token" , logout: true});
   }
 
   try {
@@ -14,13 +16,14 @@ const verifyAdmin = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user || !user.isAdmin) {
+      alert("Access denied: Admins only");
       return res.status(403).json({ message: "Access denied: Admins only" });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized: Invalid token" });
+    res.status(401).json({ message: "Unauthorized: Invalid token", logout: true });
   }
 };
 

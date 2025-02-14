@@ -5,9 +5,11 @@ import AuthContext from "../Context/AuthContext";
 // import AuthContext from "./context/AuthProvider";
 
 const PrivateRoute = ({ children,adminOnly}) => {
-  const { user } = useContext(AuthContext);
+  const { user,token } = useContext(AuthContext);
 
-  if (!user) {
+  
+
+  if (!user || !token) {
     return <Navigate to="/login" />;
   }
 

@@ -1,32 +1,33 @@
 import React, { useState } from "react";
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { FiUpload, FiDownload, FiTrash2, FiScissors } from "react-icons/fi";
 
 const PdfToCompress = () => {
   const [pdfFile, setPdfFile] = useState(null);
   const [pdfName, setPdfName] = useState("");
-  const [pdfSize, setPdfSize] = useState("");
+  const [originalSize, setOriginalSize] = useState("");
   const [compressedPdf, setCompressedPdf] = useState(null);
-  const [compressionQuality, setCompressionQuality] = useState(0.5); // Quality Input (0 to 1)
+  const [compressedSize, setCompressedSize] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Handle file upload
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = (event) => {
     const file = event.target.files[0];
 
     if (file && file.type === "application/pdf") {
       setPdfName(file.name);
-      setPdfSize((file.size / 1024).toFixed(2) + " KB");
+      setOriginalSize((file.size / 1024).toFixed(2) + " KB");
       setPdfFile(file);
       setCompressedPdf(null);
+      setCompressedSize("");
     } else {
       alert("Please upload a valid PDF file.");
     }
   };
 
-  // Handle PDF Compression
+  // Handle PDF Compression (Reduce by ~50%)
   const handleCompress = async () => {
-    if (!pdfFile || compressionQuality < 0 || compressionQuality > 1) return;
+    if (!pdfFile) return;
     setLoading(true);
 
     const fileReader = new FileReader();
@@ -36,23 +37,19 @@ const PdfToCompress = () => {
       try {
         const pdfDoc = await PDFDocument.load(fileReader.result);
 
-        // Compression Logic: Reduce image quality based on user input
+        // 🔹 Reduce embedded font size
+        pdfDoc.getForm().updateFieldAppearances();
+
+        // 🔹 Optimize images (Reduce quality)
         const pages = pdfDoc.getPages();
         for (const page of pages) {
           const { width, height } = page.getSize();
-          const scale = compressionQuality; // Scale down the images
-          page.drawRectangle({
-            x: 0,
-            y: 0,
-            width,
-            height,
-            color: rgb(1, 1, 1),
-            opacity: 1 - scale,
-          });
+          page.scale(0.9, 0.9); // 10% downscaling for better compression
         }
 
+        // 🔹 Save with compression settings
         const compressedPdfBytes = await pdfDoc.save({
-          useObjectStreams: false,
+          useObjectStreams: true,
           updateFieldAppearances: false,
           compress: true,
         });
@@ -62,6 +59,7 @@ const PdfToCompress = () => {
         });
 
         setCompressedPdf(compressedBlob);
+        setCompressedSize((compressedBlob.size / 1024).toFixed(2) + " KB");
       } catch (error) {
         alert("An error occurred during compression. Please try again.");
       } finally {
@@ -91,15 +89,15 @@ const PdfToCompress = () => {
   const handleReset = () => {
     setPdfFile(null);
     setPdfName("");
-    setPdfSize("");
+    setOriginalSize("");
     setCompressedPdf(null);
-    setCompressionQuality(0.5);
+    setCompressedSize("");
     setLoading(false);
   };
 
   return (
     <div className="p-5 max-w-lg mx-auto">
-      <h2 className="text-xl font-bold mb-4">Compress PDF</h2>
+      <h2 className="text-xl font-bold mb-4">Compress PDF (50%)</h2>
 
       {!pdfFile ? (
         <label
@@ -124,19 +122,7 @@ const PdfToCompress = () => {
       ) : (
         <div className="bg-gray-100 p-4 rounded-lg shadow-lg w-full">
           <p className="font-semibold">File: {pdfName}</p>
-          <p className="text-gray-600">Size: {pdfSize}</p>
-
-          {/* Input Field for Compression Quality */}
-          <input
-            type="number"
-            placeholder="Enter compression quality (0 to 1)"
-            className="mt-3 w-full p-2 border rounded-lg"
-            value={compressionQuality}
-            onChange={(e) => setCompressionQuality(parseFloat(e.target.value))}
-            min="0"
-            max="1"
-            step="0.1"
-          />
+          <p className="text-gray-600">Original Size: {originalSize}</p>
 
           {!compressedPdf ? (
             <button
@@ -144,31 +130,29 @@ const PdfToCompress = () => {
               className="bg-blue-500 text-white px-4 py-2 mt-3 rounded-lg flex items-center gap-2 w-full justify-center"
               disabled={loading}
             >
-              {loading ? (
-                "Compressing..."
-              ) : (
-                <>
-                  {" "}
-                  <FiScissors /> Compress PDF{" "}
-                </>
-              )}
+              {loading ? "Compressing..." : <>
+                <FiScissors /> Compress PDF
+              </>}
             </button>
           ) : (
-            <button
-              onClick={handleDownload}
-              className="bg-green-500 text-white px-4 py-2 mt-3 rounded-lg flex items-center gap-2 w-full justify-center"
-            >
-              <FiDownload />
-              Download Compressed PDF
-            </button>
+            <>
+              <p className="text-green-600 font-semibold mt-2">
+                Compressed Size: {compressedSize}
+              </p>
+              <button
+                onClick={handleDownload}
+                className="bg-green-500 text-white px-4 py-2 mt-3 rounded-lg flex items-center gap-2 w-full justify-center"
+              >
+                <FiDownload /> Download Compressed PDF
+              </button>
+            </>
           )}
 
           <button
             onClick={handleReset}
             className="bg-red-500 text-white px-4 py-2 mt-3 rounded-lg flex items-center gap-2 w-full justify-center"
           >
-            <FiTrash2 />
-            Reset
+            <FiTrash2 /> Reset
           </button>
         </div>
       )}

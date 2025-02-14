@@ -5,13 +5,14 @@ import { Link } from "react-router-dom";
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [number, setNumber] = useState(""); 
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/auth/register", { name, email, password });
+      await axios.post(`${import.meta.env.VITE_BLACKEND_URL}/api/auth/register`, { name, email, password ,number});
       setMessage("🎉 Registration successful! Please login.");
     } catch (error) {
       setMessage(error.response?.data?.message || "Registration failed!");
@@ -45,6 +46,17 @@ const Register = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-600 text-sm mb-1">Mobile Number</label>
+            <input
+              type="number"
+              placeholder="Enter your Mobile Number"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
               className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />

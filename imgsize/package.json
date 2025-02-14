@@ -27,6 +27,7 @@
     "classnames": "^2.5.1",
     "heroicons": "^2.2.0",
     "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.474.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.8.69",
@@ -34,7 +35,9 @@
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^6.29.0",
-    "styled-components": "^6.1.14"
+    "socket.io-client": "^4.8.1",
+    "styled-components": "^6.1.14",
+    "tailwind-scrollbar-hide": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

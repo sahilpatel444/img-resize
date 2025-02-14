@@ -1,10 +1,11 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState, useContext } from "react";
 import axios from "axios";
 import AuthContext from "../Context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const { setUser } = useContext(AuthContext);
+  const { setUser, setToken } = useContext(AuthContext);
   const navigate = useNavigate(); // ✅ Initialize navigation
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,22 +15,24 @@ const Login = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-      });
+      const res = await axios.post(
+        `${import.meta.env.VITE_BLACKEND_URL}/api/auth/login`,
+        {
+          email,
+          password,
+        }
+      );
 
-      const { token, user, } = res.data; // Get token and isAdmin status
-   
-    
+      const { token, user } = res.data; // Get token and isAdmin status
+
       // Store in localStorage
-      localStorage.setItem("token", token );
-      localStorage.setItem("user", JSON.stringify({ user }));
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
 
       // Update context state
-      setUser({ token, ...user });
-
-
+      setUser(user);
+      setToken(token);
       // ✅ Check user role and navigate accordingly
       if (user.isAdmin) {
         navigate("/admin"); // Redirect Admin to Dashboard
@@ -44,10 +47,14 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-gray-700 mb-4">Login</h2>
-        
-        {error && <p className="text-red-500 text-sm text-center mb-3">{error}</p>}
-        
+        <h2 className="text-2xl font-bold text-center text-gray-700 mb-4">
+          Login
+        </h2>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center mb-3">{error}</p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-600 text-sm mb-1">Email</label>
@@ -57,6 +64,8 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              htmlFor="email"
+              required
             />
           </div>
 
@@ -68,6 +77,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
           </div>
 
@@ -81,7 +91,9 @@ const Login = () => {
 
         <p className="text-sm text-gray-500 text-center mt-3">
           Don't have an account?{" "}
-          <Link to="/register" className="text-blue-500 hover:underline">Register</Link>
+          <Link to="/register" className="text-blue-500 hover:underline">
+            Register
+          </Link>
         </p>
       </div>
     </div>

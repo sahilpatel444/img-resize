@@ -1,0 +1,52 @@
+<!-- navbar code -->
+<div className="flex space-x-4  ">
+                {navigation.map((item, index) => (
+                  <div
+                    key={item.name}
+                    to={item.href}
+                    onMouseEnter={() => item.dropdown && setOpenDropdown(index)}
+                    onMouseLeave={() => item.dropdown && setOpenDropdown(null)}
+                  >
+                    {/* ✅ Use Link for Main Navigation Items */}
+                    <div
+                      to={item.href}
+                      aria-current={item.current ? "page" : undefined}
+                      className={classNames(
+                        item.current ? "bg-gray-800 text-white" : "",
+                        "hover:bg-gray-700 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium flex items-center"
+                      )}
+                    >
+                      {" "}
+                      {/* Main Navigation Items */}
+                      <button
+                        onClick={() => !item.dropdown && navigate(item.href)}
+                        className="bg-gray-800  text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium flex items-center"
+                      >
+                        {item.name}
+                        {item.dropdown && (
+                          <ChevronDown
+                            className={`ml-2 w-4 h-4 transition-transform duration-200 ${
+                              openDropdown === index ? "rotate-180" : "rotate-0"
+                            }`}
+                          />
+                        )}
+                      </button>
+                    </div>
+                    {/* Dropdown List for "Convert" */}
+                    {item.dropdown && openDropdown === index && (
+                      <div className="absolute  w-40 bg-gray-800 text-white rounded-md shadow-lg">
+                        {item.dropdown.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className="block px-4 py-2 text-gray-300 hover:bg-gray-700"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div> 

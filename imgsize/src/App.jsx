@@ -17,12 +17,18 @@ import AdminPanel from "./pages/AdminPanal";
 import PrivateRoute from "./components/PrivateRoutes";
 import { AuthProvider } from "./Context/AuthContext";
 
+// import { useEffect } from "react";
+// import { useContext } from "react";
+
 function App() {
   const location = useLocation(); // ✅ Get current route
+  // const { logout } = useContext(AuthContext);
 
   // Hide navbar on login and register pages
   const hideNavbar =
-    location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login-" || location.pathname === "/register-";
+
+  // useDetectLocalStorageTamper(); // Start monitoring localStorage of localstorage changess to logout
 
   return (
     <>
@@ -32,8 +38,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           {/* Protect Admin Panel (Only accessible to isAdmin=true users) */}
-          <Route path="/admin" element={<PrivateRoute adminOnly={true}><AdminPanel /></PrivateRoute>} />
-
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute adminOnly={true}>
+                <AdminPanel />
+              </PrivateRoute>
+            }
+          />
 
           <Route path="/" element={<HomePage />} />
           <Route path="*" element={<NotFound />} />
