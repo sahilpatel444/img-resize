@@ -26,7 +26,7 @@ IMSizex is an image manipulation and management web application with various adm
 - **Backend**: Node.js, Express.js
 - **Real-time Communication**: Socket.IO
 - **Database**: MongoDB
-- **Authentication**: Google Auth, JWT
+- **Authentication**: JWT
 - **PDF and CSV Export**: `pdf-lib`, `json2csv`
 - **Image Processing**: Sharp, Jimp, PDF.js
 
