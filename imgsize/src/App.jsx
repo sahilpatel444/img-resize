@@ -16,6 +16,9 @@ import Register from "./pages/Register";
 import AdminPanel from "./pages/AdminPanal";
 import PrivateRoute from "./components/PrivateRoutes";
 import { AuthProvider } from "./Context/AuthContext";
+import CropImg from "./pages/cropImg/CropImg";
+import Profile from "./pages/user/Profile";
+import { Bounce, ToastContainer } from "react-toastify";
 
 // import { useEffect } from "react";
 // import { useContext } from "react";
@@ -33,10 +36,24 @@ function App() {
   return (
     <>
       <AuthProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover={false}
+          theme="dark"
+          transition={Bounce}
+        />
         {!hideNavbar && <Navbar />} {/* ✅ Conditionally render Navbar */}
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/user-profile" element={<Profile />} />
           {/* Protect Admin Panel (Only accessible to isAdmin=true users) */}
           <Route
             path="/admin"
@@ -51,7 +68,8 @@ function App() {
           <Route path="*" element={<NotFound />} />
           <Route path="/resize" element={<InputFilePage />} />
           <Route path="/image-resizer" element={<h1>Image Resizer Page</h1>} />
-          <Route path="/crop-image" element={<h1>Crop Image Page</h1>} />
+          <Route path="/crop-image" element={<CropImg />} />
+
           <Route path="/compress/mb-to-kb" />
           <Route path="/compress/pdf-to-comprase" element={<PdfToComprase />} />
           <Route path="/compress/jpg-to-png" element={<JpgToPng />} />

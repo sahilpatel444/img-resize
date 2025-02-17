@@ -10,7 +10,7 @@ const router = express.Router();
 
 // Register Route
 router.post("/register", async (req, res) => {
-  const { name, email,number, password } = req.body;
+  const { name, email, number, password } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -20,7 +20,7 @@ router.post("/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({ name, email,number, password: hashedPassword });
+    const newUser = new User({ name, email, number, password: hashedPassword });
     await newUser.save();
 
     res.status(201).json({ message: "User registered successfully" });
@@ -96,7 +96,6 @@ router.get("/verify-user", verifyToken, async (req, res) => {
   }
 });
 
-
 // Get all messages for users
 router.get("/messages", async (req, res) => {
   try {
@@ -108,6 +107,16 @@ router.get("/messages", async (req, res) => {
   }
 });
 
-
+// Update user profile
+router.put("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(user); // Send updated user back to client
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update profile",logout:true });
+  }
+});
 
 module.exports = router;

@@ -22,6 +22,7 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../Context/AuthContext";
 import axios from "axios";
 import { socket } from "../socket"; // Import socket.js
+import { FaGithub } from "react-icons/fa";
 
 // const navigation = [
 //   { name: "Image Resizers", href: "/resize", current: true },
@@ -99,6 +100,7 @@ const Navbar = () => {
 
   //   return () => socket.off("newMessage");
   // }, []);
+  // .fetch notiication details in database
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -221,14 +223,22 @@ const Navbar = () => {
               </div>
             </div>
           </div>
+
+          {/* notification icon */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            <div className="relative">
+            <div className="relative ">
+              {/* <button>
+              <Link to='/github.com'>
+                <FaGithub size={30} />
+              </Link>
+              </button> */}
+
               <button
                 type="button"
                 className="relative rounded-full bg-gray-800 p-2 text-gray-400 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
-                // onClick={() => setShowDropdown(!showDropdown)}
-                onMouseEnter={() => setShowDropdown(!showDropdown)}
-                onMouseLeave={() => setShowDropdown(true)}
+                onClick={() => setShowDropdown(!showDropdown)}
+                // onMouseEnter={() => setShowDropdown(!showDropdown)}
+                // onMouseLeave={() => setShowDropdown(true)}
               >
                 <span className="sr-only">View notifications</span>
                 <BellIcon aria-hidden="true" className="w-6 h-6" />
@@ -242,7 +252,7 @@ const Navbar = () => {
               {/* Notification Dropdown */}
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg z-10 max-h-72 overflow-y-auto border scrollbar-hide">
-                  <div className="py-2 hide-scrollbar" onMouseLeave={() => setShowDropdown(false)}>
+                  <div className="py-2 hide-scrollbar">
                     {notifications.length === 0 ? (
                       <p className="text-gray-500 text-center py-2">
                         No notifications
@@ -250,7 +260,6 @@ const Navbar = () => {
                     ) : (
                       notifications.map((msg) => (
                         <div
-                        
                           key={msg._id}
                           className="px-4 py-2 border-b last:border-0 hover:bg-gray-700 "
                         >
@@ -288,14 +297,29 @@ const Navbar = () => {
                 transition
                 className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
-                <MenuItem>
-                  <Link
-                    to="/user-profile"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                  >
-                    {!user ? "My Profile" : user.name}
-                  </Link>
-                </MenuItem>
+                {!user ? (
+                  <>
+                    <MenuItem>
+                      <Link
+                        to="#"
+                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
+                      >
+                        You are Guast User
+                      </Link>
+                    </MenuItem>
+                  </>
+                ) : (
+                  <>
+                    <MenuItem>
+                      <Link
+                        to="/user-profile"
+                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
+                      >
+                        {!user ? "My Profile" : user.name}
+                      </Link>
+                    </MenuItem>
+                  </>
+                )}
                 <MenuItem>
                   <Link
                     to="#"
@@ -319,6 +343,7 @@ const Navbar = () => {
                   <>
                     <MenuItem>
                       <Link
+                        to="/"
                         onClick={logout}
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
                       >

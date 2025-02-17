@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FaGithub } from "react-icons/fa";
 
 // HomePage.propTypes = {};
 
@@ -86,6 +87,12 @@ const HomePage = () => {
           <p>IMG TO PDF</p>
           <p>IMG TO PDF</p>
           <p>IMG TO PDF</p> */}
+          <h2 className=" font-bold"> Create By Sahil @2025</h2>
+          <div className="flex justify-center mt-5">
+            <a href="https://github.com/sahilpatel444/img-resize">
+              <FaGithub size={30}/>
+            </a>
+          </div>
         </div>
       </section>
     </div>
