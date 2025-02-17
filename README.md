@@ -35,5 +35,6 @@ IMSizex is an image manipulation and management web application with various adm
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/imsizex.git
+git clone https://github.com/sahilpatel444/img-resize.git
 cd imsizex
+
