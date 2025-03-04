@@ -131,13 +131,40 @@ const Navbar = () => {
   useEffect(() => {
     const fetchNavbarItems = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BLACKEND_URL}/api/navbar`
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          console.error("No token found, redirecting to login.");
+          return;
+        }
+
+        console.log("Using Token:", token); // Debug: Check if the token is retrieved correctly
+
+        const res = await fetch(
+          `${import.meta.env.VITE_BLACKEND_URL}/api/navbar/navbar-items`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Attach token correctly
+            },
+          }
         );
-        setNavbarItems(res.data);
-        console.log("Navbar Items:", res.data);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            `HTTP error! Status: ${res.status} - ${errorData.message}`
+          );
+        }
+
+        const data = await res.json();
+        console.log("Fetched Navbar Items:", data);
+
+        setNavbarItems(Array.isArray(data) ? data : data.navbarItems || []);
       } catch (error) {
         console.error("Error fetching navbar items:", error);
+        setNavbarItems([]);
       }
     };
 
@@ -174,13 +201,13 @@ const Navbar = () => {
               <div className="flex space-x-4">
                 {navbarItems.map((item, index) => (
                   <Link
-                    key={item._id}
-                    to={item.href}
+                    key={item?._id}
+                    to={item?.href}
                     onMouseEnter={() => item.dropdown && setOpenDropdown(index)}
                     onMouseLeave={() => item.dropdown && setOpenDropdown(null)}
                   >
                     <div
-                      to={item.href}
+                      to={item?.href}
                       className={classNames(
                         item ? "bg-gray-800 text-white" : "",
                         "hover:bg-gray-700 hover:text-white",

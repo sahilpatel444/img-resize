@@ -61,12 +61,68 @@ router.delete("/navbar/:id", verifyAdmin, async (req, res) => {
 });
 
 // ✅ GET all users (Admin only)
+// Fetch users with their assigned navbar dropdown access
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, "name email number isAdmin");
-    res.json(users);
+    const users = await User.find().select("name email number isAdmin");
+    const navbarItems = await NavbarItem.find({}).lean();
+
+    // Map user dropdown access
+    const usersWithDropdownAccess = users.map((user) => {
+      const accessibleDropdowns = navbarItems.flatMap((navbar) =>
+        navbar.dropdown
+          .filter((dropdown) =>
+            dropdown.allowedUsers.some(
+              (allowedUser) => allowedUser.toString() === user._id.toString()
+            )
+          )
+          .map((dropdown) => ({
+            navbarName: navbar.name,
+            dropdownName: dropdown.name,
+          }))
+      );
+
+      return { ...user.toObject(), dropdownAccess: accessibleDropdowns };
+    });
+
+    res.json(usersWithDropdownAccess);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+// Update user dropdown access
+router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: "Access Denied" });
+    }
+
+    const { userId } = req.params;
+    const { dropdownIds } = req.body; // Array of dropdown item IDs
+
+    const navbarItems = await NavbarItem.find({});
+
+    // Update each navbar dropdown
+    navbarItems.forEach(async (navbar) => {
+      navbar.dropdown.forEach((dropdown) => {
+        if (dropdownIds.includes(dropdown._id.toString())) {
+          if (!dropdown.allowedUsers.includes(userId)) {
+            dropdown.allowedUsers.push(userId);
+          }
+        } else {
+          dropdown.allowedUsers = dropdown.allowedUsers.filter(
+            (id) => id.toString() !== userId
+          );
+        }
+      });
+      await navbar.save();
+    });
+
+    res.json({ message: "Dropdown access updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 });
 //  pagination route
@@ -184,5 +240,21 @@ router.delete("/messages/:id", verifyAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
+router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: "Access Denied" });
+    }
+
+    const { dropdownAccess } = req.body;
+    await User.findByIdAndUpdate(req.params.userId, { dropdownAccess });
+
+    res.json({ message: "Dropdown access updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
 
 module.exports = router;
