@@ -61,14 +61,72 @@ router.delete("/navbar/:id", verifyAdmin, async (req, res) => {
 });
 
 // ✅ GET all users (Admin only)
+// Fetch users with their assigned navbar dropdown access
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, "name email number isAdmin");
-    res.json(users);
+    const users = await User.find().select("name email number isAdmin");
+    const navbarItems = await NavbarItem.find({}).lean();
+
+    // Map user dropdown access
+    const usersWithDropdownAccess = users.map((user) => {
+      const accessibleDropdowns = navbarItems.flatMap((navbar) =>
+        navbar.dropdown
+          .filter((dropdown) =>
+            dropdown.allowedUsers.some(
+              (allowedUser) => allowedUser.toString() === user._id.toString()
+            )
+          )
+          .map((dropdown) => ({
+            dropdownId: dropdown._id.toString(), // Store ID properly
+            navbarName: navbar.name,
+            dropdownName: dropdown.name,
+          }))
+      );
+
+      return { ...user.toObject(), dropdownAccess: accessibleDropdowns };
+    });
+
+    res.json(usersWithDropdownAccess);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 });
+
+// Update user dropdown access
+// ✅ Update user dropdown access efficiently
+router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: "Access Denied" });
+    }
+
+    const { userId } = req.params;
+    const { dropdownIds } = req.body; // Selected dropdown items
+
+    if (!Array.isArray(dropdownIds)) {
+      return res.status(400).json({ message: "Invalid dropdownIds format" });
+    }
+
+    // Remove user from all dropdowns where they are not selected
+    await NavbarItem.updateMany(
+      { "dropdown.allowedUsers": userId },
+      { $pull: { "dropdown.$[].allowedUsers": userId } }
+    );
+
+    // Add user to the selected dropdowns
+    await NavbarItem.updateMany(
+      { "dropdown._id": { $in: dropdownIds } },
+      { $addToSet: { "dropdown.$[].allowedUsers": userId } }
+    );
+
+    res.json({ message: "Dropdown access updated successfully" });
+  } catch (error) {
+    console.error("Error updating dropdown access:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 //  pagination route
 router.get("/users/page", verifyAdmin, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
@@ -157,7 +215,9 @@ router.post("/send-message", verifyAdmin, async (req, res) => {
     // ✅ Emit message to all connected clients
     req.io.emit("newMessage", newMessage);
 
-    res.status(200).json({ success: true, message: "Message sent and saved successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Message sent and saved successfully" });
   } catch (error) {
     console.error("Error saving message:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -172,7 +232,9 @@ router.delete("/messages/:id", verifyAdmin, async (req, res) => {
     // Check if message exists
     const message = await Message.findById(messageId);
     if (!message) {
-      return res.status(404).json({ success: false, message: "Message not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Message not found" });
     }
 
     // Delete message
@@ -184,5 +246,46 @@ router.delete("/messages/:id", verifyAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
+// router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+//   try {
+//     if (!req.user.isAdmin) {
+//       return res.status(403).json({ message: "Access Denied" });
+//     }
+
+//     const { dropdownId, isChecked } = req.body; // Single dropdown item update
+
+//     if (!dropdownId) {
+//       return res.status(400).json({ message: "Missing dropdownId" });
+//     }
+
+//     const user = await User.findById(req.params.userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     let updatedDropdownAccess = user.dropdownAccess || [];
+
+//     if (isChecked) {
+//       // Add dropdown access if it doesn't exist
+//       if (!updatedDropdownAccess.some((d) => d.dropdownId.toString() === dropdownId)) {
+//         updatedDropdownAccess.push({ dropdownId });
+//       }
+//     } else {
+//       // Remove dropdown access
+//       updatedDropdownAccess = updatedDropdownAccess.filter(
+//         (d) => d.dropdownId.toString() !== dropdownId
+//       );
+//     }
+
+//     user.dropdownAccess = updatedDropdownAccess;
+//     await user.save();
+
+//     res.json({ message: "Dropdown access updated successfully", user });
+//   } catch (error) {
+//     console.error("Error updating dropdown access:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
 
 module.exports = router;

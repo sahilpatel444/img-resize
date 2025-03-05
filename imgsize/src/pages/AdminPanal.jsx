@@ -335,6 +335,61 @@ const AdminPanel = () => {
     }
   };
 
+  const handleAccessChange = async (userId, dropdownId, isChecked) => {
+    console.log("User ID:", userId);
+    console.log("Dropdown ID:", dropdownId);
+    console.log("Checked:", isChecked);
+
+    try {
+      // Find the user in the state
+      const user = users.find((u) => u._id === userId);
+      const existingDropdownIds =
+        user?.dropdownAccess?.map((d) => d.dropdownId) || [];
+
+      // Update dropdown access dynamically
+      const updatedDropdownIds = isChecked
+        ? [...new Set([...existingDropdownIds, dropdownId])] // Add if checked
+        : existingDropdownIds.filter((id) => id !== dropdownId); // Remove if unchecked
+
+      // Send updated dropdown access list to the backend
+      const res = await fetch(
+        `${
+          import.meta.env.VITE_BLACKEND_URL
+        }/api/admin/update-dropdown-access/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ dropdownIds: updatedDropdownIds }), // Send full list
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to update dropdown access: ${res.status}`);
+      }
+
+      console.log("Dropdown access updated successfully.");
+
+      // Update the local state to reflect the changes
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u._id === userId
+            ? {
+                ...u,
+                dropdownAccess: updatedDropdownIds.map((id) => ({
+                  dropdownId: id,
+                })),
+              }
+            : u
+        )
+      );
+    } catch (error) {
+      console.error("Error updating dropdown access:", error);
+    }
+  };
+
   // Function to export data as CSV
   // const exportToCSV = () => {
   //   if (users.length === 0) return;
@@ -752,42 +807,77 @@ const AdminPanel = () => {
           className="overflow-y-auto max-h-96 border border-gray-300 rounded-lg shadow-md mt-2"
           onScroll={handleScroll}
         >
-          <table className="min-w-full bg-white ">
+          <table className="min-w-full bg-white">
             <thead className="bg-gray-200 sticky top-0">
               <tr>
                 <th className="py-2 px-4 border">Name</th>
                 <th className="py-2 px-4 border">Email</th>
-                <th className="py-2 px-4 border">Phone Number</th>
+                <th className="py-2 px-4 border">Phone</th>
                 <th className="py-2 px-4 border">Role</th>
+                <th className="py-2 px-4 border">Dropdown Access</th>
               </tr>
             </thead>
             <tbody>
               {users.length > 0 ? (
-                users.map((u, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-100">
-                    <td className="py-2 px-4 border">{u.name}</td>
-                    <td className="py-2 px-4 border">{u.email}</td>
-                    <td className="py-2 px-4 border">{u.number || "N/A"}</td>
+                users.map((user) => (
+                  <tr key={user._id} className="border-b hover:bg-gray-100">
+                    <td className="py-2 px-4 border">{user.name}</td>
+                    <td className="py-2 px-4 border">{user.email}</td>
+                    <td className="py-2 px-4 border">{user.number || "N/A"}</td>
                     <td className="py-2 px-4 border">
                       <select
-                        value={u.isAdmin ? "Admin" : "User"}
+                        value={user.isAdmin ? "Admin" : "User"}
                         onChange={(e) =>
-                          handleRoleChange(u._id, e.target.value)
+                          handleRoleChange(user._id, e.target.value)
                         }
                         // className="border p-1 rounded text-gray-700"
                         className={classNames(
-                          u.isAdmin ? "text-green-500" : ""
+                          user.isAdmin ? "text-green-500" : ""
                         )}
                       >
                         <option value="User">User</option>
                         <option value="Admin">Admin</option>
                       </select>
                     </td>
+
+                    <td className="py-2 px-4 border">
+                      <div className="flex flex-col">
+                        {navbarItems?.map((navbar) =>
+                          navbar?.dropdown?.map((dropdown) => {
+                            // If user is admin, show all checkboxes
+                            const isChecked = user?.dropdownAccess?.some(
+                              (d) => d.dropdownId === dropdown._id
+                            );
+
+                            return (
+                              <label
+                                key={dropdown._id}
+                                className="flex items-center"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) =>
+                                    handleAccessChange(
+                                      user._id,
+                                      dropdown._id,
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="mr-2"
+                                />
+                                {dropdown.name} ({navbar.name})
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="py-4 text-center text-gray-500">
+                  <td colSpan="5" className="py-4 text-center text-gray-500">
                     No users found.
                   </td>
                 </tr>
@@ -839,7 +929,10 @@ const AdminPanel = () => {
         )}
       </div>
       <div className="flex justify-center mt-2 bg-gray-200">
-        <h1 className=" flex items-center justify-center m-10 font-bold text-3xl"> The End</h1>
+        <h1 className=" flex items-center justify-center m-10 font-bold text-3xl">
+          {" "}
+          The End
+        </h1>
       </div>
     </div>
   );
