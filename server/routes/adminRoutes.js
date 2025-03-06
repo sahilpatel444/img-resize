@@ -5,7 +5,7 @@ const { verifyAdmin } = require("../middleware/authMiddleware");
 const bcrypt = require("bcryptjs");
 const NavbarItem = require("../Models/NavbarItem"); // Import model
 const Message = require("../Models/Message");
-
+const mongoose = require("mongoose");
 router.use((req, res, next) => {
   if (!req.io) {
     return res.status(500).json({ error: "Socket.IO is not initialized" });
@@ -64,7 +64,9 @@ router.delete("/navbar/:id", verifyAdmin, async (req, res) => {
 // Fetch users with their assigned navbar dropdown access
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("name email number isAdmin");
+    const users = await User.find().select(
+      "name email number isAdmin dropdownAccess"
+    );
     const navbarItems = await NavbarItem.find({}).lean();
 
     // Map user dropdown access
@@ -96,33 +98,60 @@ router.get("/users", verifyAdmin, async (req, res) => {
 // Update user dropdown access
 // ✅ Update user dropdown access efficiently
 router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     if (!req.user.isAdmin) {
+      await session.abortTransaction();
       return res.status(403).json({ message: "Access Denied" });
     }
 
     const { userId } = req.params;
-    const { dropdownIds } = req.body; // Selected dropdown items
+    let { dropdownIds } = req.body; // Selected dropdown items
 
     if (!Array.isArray(dropdownIds)) {
+      await session.abortTransaction();
       return res.status(400).json({ message: "Invalid dropdownIds format" });
     }
 
-    // Remove user from all dropdowns where they are not selected
-    await NavbarItem.updateMany(
-      { "dropdown.allowedUsers": userId },
-      { $pull: { "dropdown.$[].allowedUsers": userId } }
+    console.log("Updating dropdown access for user:", userId);
+    console.log("Selected dropdowns:", dropdownIds);
+
+    // ✅ Corrected: Convert dropdownIds to MongoDB ObjectIds
+    const dropdownObjectIds = dropdownIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
     );
 
-    // Add user to the selected dropdowns
+    // ✅ Corrected: Convert userId to ObjectId
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    // Step 1: **Remove user from all dropdowns first**
     await NavbarItem.updateMany(
-      { "dropdown._id": { $in: dropdownIds } },
-      { $addToSet: { "dropdown.$[].allowedUsers": userId } }
+      { "dropdown.allowedUsers": userObjectId },
+      { $pull: { "dropdown.$[].allowedUsers": userObjectId } },
+      { session }
     );
 
+    // Step 2: **Add user to only selected dropdowns**
+    for (let dropdownId of dropdownObjectIds) {
+      await NavbarItem.updateOne(
+        { "dropdown._id": dropdownId },
+        { $addToSet: { "dropdown.$.allowedUsers": userObjectId } },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    console.log("✅ Dropdown access successfully updated in MongoDB!");
     res.json({ message: "Dropdown access updated successfully" });
   } catch (error) {
-    console.error("Error updating dropdown access:", error);
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("❌ Error updating dropdown access:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
@@ -247,7 +276,7 @@ router.delete("/messages/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+//  router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
 //   try {
 //     if (!req.user.isAdmin) {
 //       return res.status(403).json({ message: "Access Denied" });
