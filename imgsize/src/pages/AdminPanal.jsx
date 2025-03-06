@@ -341,7 +341,6 @@ const AdminPanel = () => {
     console.log("Checked:", isChecked);
 
     try {
-      // Find the user in the state
       const user = users.find((u) => u._id === userId);
       const existingDropdownIds =
         user?.dropdownAccess?.map((d) => d.dropdownId) || [];
@@ -350,6 +349,8 @@ const AdminPanel = () => {
       const updatedDropdownIds = isChecked
         ? [...new Set([...existingDropdownIds, dropdownId])] // Add if checked
         : existingDropdownIds.filter((id) => id !== dropdownId); // Remove if unchecked
+
+      console.log("Updated Dropdowns to send:", updatedDropdownIds);
 
       // Send updated dropdown access list to the backend
       const res = await fetch(
@@ -362,7 +363,7 @@ const AdminPanel = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ dropdownIds: updatedDropdownIds }), // Send full list
+          body: JSON.stringify({ dropdownIds: updatedDropdownIds }),
         }
       );
 
@@ -370,7 +371,8 @@ const AdminPanel = () => {
         throw new Error(`Failed to update dropdown access: ${res.status}`);
       }
 
-      console.log("Dropdown access updated successfully.");
+      const data = await res.json(); // Ensure the response is read
+      console.log("Response from server:", data);
 
       // Update the local state to reflect the changes
       setUsers((prevUsers) =>
@@ -385,10 +387,14 @@ const AdminPanel = () => {
             : u
         )
       );
+
+      console.log("Dropdown access updated successfully.");
     } catch (error) {
       console.error("Error updating dropdown access:", error);
     }
   };
+
+  console.log(users, "users with dropdown access");
 
   // Function to export data as CSV
   // const exportToCSV = () => {
