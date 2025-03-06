@@ -7,6 +7,9 @@ const UserSchema = new mongoose.Schema(
     number: { type: String, required: true },
     password: { type: String, required: true },
     isAdmin: { type: Boolean, default: false },
+    dropdownAccess: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "NavbarItem.dropdown" },
+    ], // Store allowed dropdowns
   },
   { timestamps: true }
 );
