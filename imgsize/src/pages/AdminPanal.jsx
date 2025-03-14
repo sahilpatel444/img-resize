@@ -336,62 +336,99 @@ const AdminPanel = () => {
   };
 
   const handleAccessChange = async (userId, dropdownId, isChecked) => {
-    console.log("User ID:", userId);
-    console.log("Dropdown ID:", dropdownId);
-    console.log("Checked:", isChecked);
-
+    const token = localStorage.getItem("token");
     try {
-      const user = users.find((u) => u._id === userId);
-      const existingDropdownIds =
-        user?.dropdownAccess?.map((d) => d.dropdownId) || [];
-
-      // Update dropdown access dynamically
-      const updatedDropdownIds = isChecked
-        ? [...new Set([...existingDropdownIds, dropdownId])] // Add if checked
-        : existingDropdownIds.filter((id) => id !== dropdownId); // Remove if unchecked
-
-      console.log("Updated Dropdowns to send:", updatedDropdownIds);
-
-      // Send updated dropdown access list to the backend
-      const res = await fetch(
+      const res = await axios.put(
         `${
           import.meta.env.VITE_BLACKEND_URL
         }/api/admin/update-dropdown-access/${userId}`,
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ dropdownIds: updatedDropdownIds }),
+          dropdownId,
+          isChecked,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!res.ok) {
-        throw new Error(`Failed to update dropdown access: ${res.status}`);
+      if (res.data.success) {
+        // Update local state with the updated user data
+        setUsers((prevUsers) =>
+          prevUsers.map((user) => (user._id === userId ? res.data.user : user))
+        );
+      } else {
+        alert("Failed to update dropdown access");
       }
-
-      const data = await res.json(); // Ensure the response is read
-      console.log("Response from server:", data);
-
-      // Update the local state to reflect the changes
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u._id === userId
-            ? {
-                ...u,
-                dropdownAccess: updatedDropdownIds.map((id) => ({
-                  dropdownId: id,
-                })),
-              }
-            : u
-        )
-      );
-
-      console.log("Dropdown access updated successfully.");
     } catch (error) {
       console.error("Error updating dropdown access:", error);
+      alert(
+        error.response?.data?.message || "Failed to update dropdown access"
+      );
     }
+  };
+
+  const handleRemoveDropdownAccess = async (userId, dropdownId) => {
+    if (!window.confirm("Are you sure you want to remove this access?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${
+          import.meta.env.VITE_BLACKEND_URL
+        }/api/admin/update-dropdown-access/${userId}`,
+        {
+          dropdownId,
+          isChecked: false,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.success) {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) => (user._id === userId ? res.data.user : user))
+        );
+      }
+    } catch (error) {
+      console.error("Error removing dropdown access:", error);
+      alert("Failed to remove dropdown access");
+    }
+  };
+
+  const renderDropdownAccess = (user) => {
+    return navbarItems
+      ?.map((navbar) =>
+        navbar?.dropdown?.map((dropdown) => {
+          const isChecked = user?.dropdownAccess?.some(
+            (accessId) => accessId.toString() === dropdown._id.toString()
+          );
+
+          if (!isChecked) return null;
+
+          return (
+            <div
+              key={dropdown._id}
+              className="flex items-center justify-between p-1 bg-gray-50 rounded hover:bg-gray-100"
+            >
+              <span className="truncate">
+                {dropdown.name} ({navbar.name})
+              </span>
+              <button
+                onClick={() =>
+                  handleRemoveDropdownAccess(user._id, dropdown._id)
+                }
+                className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                title="Remove access"
+              >
+                ×
+              </button>
+            </div>
+          );
+        })
+      )
+      .filter(Boolean)
+      .flat();
   };
 
   console.log(users, "users with dropdown access");
@@ -847,36 +884,29 @@ const AdminPanel = () => {
                     </td>
 
                     <td className="py-2 px-4 border">
-                      <div className="flex flex-col">
-                        {navbarItems?.map((navbar) =>
-                          navbar?.dropdown?.map((dropdown) => {
-                            // If user is admin, show all checkboxes
-                            const isChecked = user?.dropdownAccess?.some(
-                              (d) => d.dropdownId === dropdown._id
-                            );
-
-                            return (
-                              <label
+                      <div className="flex flex-col space-y-2">
+                        <select
+                          onChange={(e) => {
+                            const [navbarId, dropdownId] =
+                              e.target.value.split("|");
+                            handleAccessChange(user._id, dropdownId, true);
+                          }}
+                          className="border p-1 rounded mb-2"
+                          value=""
+                        >
+                          <option value="">Add access...</option>
+                          {navbarItems.map((navbar) =>
+                            navbar.dropdown.map((dropdown) => (
+                              <option
                                 key={dropdown._id}
-                                className="flex items-center"
+                                value={`${navbar._id}|${dropdown._id}`}
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) =>
-                                    handleAccessChange(
-                                      user._id,
-                                      dropdown._id,
-                                      e.target.checked
-                                    )
-                                  }
-                                  className="mr-2"
-                                />
                                 {dropdown.name} ({navbar.name})
-                              </label>
-                            );
-                          })
-                        )}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                        {renderDropdownAccess(user)}
                       </div>
                     </td>
                   </tr>

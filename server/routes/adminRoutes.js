@@ -64,72 +64,13 @@ router.delete("/navbar/:id", verifyAdmin, async (req, res) => {
 // Fetch users with their assigned navbar dropdown access
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("name email number isAdmin");
-    const navbarItems = await NavbarItem.find({}).lean();
+    const users = await User.find()
+      .select("name email number isAdmin dropdownAccess")
+      .lean();
 
-    // Map user dropdown access
-    const usersWithDropdownAccess = users.map((user) => {
-      const accessibleDropdowns = navbarItems.flatMap((navbar) =>
-        navbar.dropdown
-          .filter((dropdown) =>
-            dropdown.allowedUsers.some(
-              (allowedUser) => allowedUser.toString() === user._id.toString()
-            )
-          )
-          .map((dropdown) => ({
-            navbarName: navbar.name,
-            dropdownName: dropdown.name,
-          }))
-      );
-
-      return { ...user.toObject(), dropdownAccess: accessibleDropdowns };
-    });
-
-    res.json(usersWithDropdownAccess);
+    res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Server error", error });
-  }
-});
-
-// Update user dropdown access
-router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ message: "Access Denied" });
-    }
-
-    const { userId } = req.params;
-    const { dropdownIds } = req.body; // Array of dropdown item IDs
-
-    if (!dropdownIds || !Array.isArray(dropdownIds)) {
-      return res.status(400).json({ message: "Invalid dropdownIds format" });
-    }
-
-    const navbarItems = await NavbarItem.find({});
-
-    // Update each dropdown's allowedUsers efficiently
-    const updatePromises = navbarItems.map(async (navbar) => {
-      navbar.dropdown.forEach((dropdown) => {
-        if (dropdownIds.includes(dropdown._id.toString())) {
-          if (!dropdown.allowedUsers.includes(userId)) {
-            dropdown.allowedUsers.push(userId);
-          }
-        } else {
-          dropdown.allowedUsers = dropdown.allowedUsers.filter(
-            (id) => id.toString() !== userId
-          );
-        }
-      });
-
-      return navbar.save(); // Save after modifying all dropdowns
-    });
-
-    await Promise.all(updatePromises); // Ensure all updates complete
-
-    res.json({ message: "Dropdown access updated successfully" });
-  } catch (error) {
-    console.error("Error updating dropdown access:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
@@ -254,45 +195,57 @@ router.delete("/messages/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
-//   try {
-//     if (!req.user.isAdmin) {
-//       return res.status(403).json({ message: "Access Denied" });
-//     }
+router.put("/update-dropdown-access/:userId", verifyAdmin, async (req, res) => {
+  try {
+    const { dropdownId, isChecked } = req.body;
+    const userId = req.params.userId;
 
-//     const { dropdownId, isChecked } = req.body; // Single dropdown item update
+    if (!dropdownId) {
+      return res.status(400).json({ message: "Missing dropdownId" });
+    }
 
-//     if (!dropdownId) {
-//       return res.status(400).json({ message: "Missing dropdownId" });
-//     }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-//     const user = await User.findById(req.params.userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    // Initialize dropdownAccess array if it doesn't exist
+    if (!user.dropdownAccess) {
+      user.dropdownAccess = [];
+    }
 
-//     let updatedDropdownAccess = user.dropdownAccess || [];
+    if (isChecked) {
+      // Add access if not already present
+      if (
+        !user.dropdownAccess.some(
+          (id) => id.toString() === dropdownId.toString()
+        )
+      ) {
+        user.dropdownAccess.push(dropdownId);
+      }
+    } else {
+      // Remove access using proper string comparison
+      user.dropdownAccess = user.dropdownAccess.filter(
+        (id) => id.toString() !== dropdownId.toString()
+      );
+    }
 
-//     if (isChecked) {
-//       // Add dropdown access if it doesn't exist
-//       if (!updatedDropdownAccess.some((d) => d.dropdownId.toString() === dropdownId)) {
-//         updatedDropdownAccess.push({ dropdownId });
-//       }
-//     } else {
-//       // Remove dropdown access
-//       updatedDropdownAccess = updatedDropdownAccess.filter(
-//         (d) => d.dropdownId.toString() !== dropdownId
-//       );
-//     }
+    await user.save();
 
-//     user.dropdownAccess = updatedDropdownAccess;
-//     await user.save();
+    // Return the updated user object
+    const updatedUser = await User.findById(userId)
+      .select("name email number isAdmin dropdownAccess")
+      .lean();
 
-//     res.json({ message: "Dropdown access updated successfully", user });
-//   } catch (error) {
-//     console.error("Error updating dropdown access:", error);
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.json({
+      success: true,
+      message: "Dropdown access updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating dropdown access:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
 module.exports = router;

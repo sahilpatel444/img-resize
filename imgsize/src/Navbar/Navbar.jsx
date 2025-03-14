@@ -132,22 +132,20 @@ const Navbar = () => {
     const fetchNavbarItems = async () => {
       try {
         const token = localStorage.getItem("token");
+        const headers = {
+          "Content-Type": "application/json",
+        };
 
-        if (!token) {
-          console.error("No token found, redirecting to login.");
-          return;
+        // Add token to headers only if it exists
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
         }
-
-        console.log("Using Token:", token); // Debug: Check if the token is retrieved correctly
 
         const res = await fetch(
           `${import.meta.env.VITE_BLACKEND_URL}/api/navbar/navbar-items`,
           {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Attach token correctly
-            },
+            headers,
           }
         );
 

@@ -1,5 +1,6 @@
 const express = require("express");
-const NavbarItem = require("../Models/NavbarItem"); // Import model
+const NavbarItem = require("../Models/NavbarItem");
+const User = require("../Models/User");
 const router = express.Router();
 const { verifyAdmin } = require("../middleware/authMiddleware");
 const authMiddleware = require("../middleware/authMiddleware");
@@ -17,66 +18,91 @@ router.get("/", async (req, res) => {
 });
 
 // Fetch navbar items with user-specific dropdown access
-// router.get("/navbar-items", authenticateUser, async (req, res) => {
-//   try {
-//     const userId = req.user?.id;
-//     if (!userId) {
-//       return res.status(401).json({ message: "Unauthorized: User not found in token." });
-//     }
-
-//     console.log("User ID from token:", userId); // Debugging
-
-//     const navbarItems = await NavbarItem.find({}).lean();
-//     console.log("Fetched Navbar Items from DB:", navbarItems); // Debugging
-
-//     const filteredNavbarItems = navbarItems.map((item) => {
-//       const filteredDropdowns = item.dropdown.filter((dropdownItem) =>
-//         dropdownItem.allowedUsers?.some((allowedUser) => allowedUser.toString() === userId)
-//       );
-      
-//       console.log(`Filtered Dropdowns for ${item.name}:`, filteredDropdowns); // Debugging
-//       return { ...item, dropdown: filteredDropdowns };
-//     });
-
-//     console.log("Final Navbar Response:", filteredNavbarItems);
-//     res.json(filteredNavbarItems);
-//   } catch (error) {
-//     console.error("Error fetching navbar items:", error);
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
-router.get("/navbar-items", authenticateUser, async (req, res) => {
+router.get("/navbar-items", async (req, res) => {
   try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized: User not found in token." });
-    }
-
+    // Get the token from the request headers
+    const token = req.headers.authorization?.split(" ")[1];
     const navbarItems = await NavbarItem.find({}).lean();
 
-    if (req.user.isAdmin) {
-      // Admin sees all items
-      return res.json(navbarItems);
+    // If no token, return only public items
+    if (!token) {
+      const publicItems = navbarItems
+        .map((item) => ({
+          ...item,
+          dropdown: item.dropdown.filter(
+            (dropdownItem) =>
+              !dropdownItem.allowedUsers ||
+              dropdownItem.allowedUsers.length === 0
+          ),
+        }))
+        .filter(
+          (item) =>
+            item.dropdown.length > 0 ||
+            !item.dropdown ||
+            item.dropdown.length === 0
+        );
+      return res.json(publicItems);
     }
 
-    // Filter dropdown items based on allowedUsers
-    const filteredNavbarItems = navbarItems.map((item) => ({
-      ...item,
-      dropdown: item.dropdown.filter((dropdownItem) =>
-        dropdownItem.allowedUsers?.some(
-          (allowedUser) => allowedUser.toString() === userId
-        )
-      ),
-    }));
+    // Verify token and process authenticated user
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
 
-    res.json(filteredNavbarItems);
+      // For admin users, return all items
+      if (req.user.isAdmin) {
+        return res.json(navbarItems);
+      }
+
+      // For regular users, fetch their dropdown access
+      const user = await User.findById(req.user.id)
+        .select("dropdownAccess")
+        .lean();
+      const userDropdownAccess = user?.dropdownAccess || [];
+
+      const filteredNavbarItems = navbarItems
+        .map((item) => ({
+          ...item,
+          dropdown: item.dropdown.filter(
+            (dropdownItem) =>
+              userDropdownAccess.some(
+                (access) => access.toString() === dropdownItem._id.toString()
+              ) ||
+              !dropdownItem.allowedUsers ||
+              dropdownItem.allowedUsers.length === 0
+          ),
+        }))
+        .filter(
+          (item) =>
+            item.dropdown.length > 0 ||
+            !item.dropdown ||
+            item.dropdown.length === 0
+        );
+
+      return res.json(filteredNavbarItems);
+    } catch (err) {
+      // If token verification fails, return public items
+      const publicItems = navbarItems
+        .map((item) => ({
+          ...item,
+          dropdown: item.dropdown.filter(
+            (dropdownItem) =>
+              !dropdownItem.allowedUsers ||
+              dropdownItem.allowedUsers.length === 0
+          ),
+        }))
+        .filter(
+          (item) =>
+            item.dropdown.length > 0 ||
+            !item.dropdown ||
+            item.dropdown.length === 0
+        );
+      return res.json(publicItems);
+    }
   } catch (error) {
     console.error("Error fetching navbar items:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
-
 
 module.exports = router;
